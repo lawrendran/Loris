@@ -11,7 +11,7 @@ import re
 import sys
 
 def to_mysql_string(string):
-    return "'" + string.replace("'","`") + "'" if 0 < len(string) else 'null'
+    return "'" + string.replace("'","`") + "'" if len(string) > 0 else 'null'
 annotation_file = sys.argv[1]
 
 sys.stdout.write("WARNINGS;\n")
@@ -38,16 +38,20 @@ with open(annotation_file, 'r') as f:
             sys.stdout.write('-- Closing file.\n')
             break
 
-        if 0 == len(line["Name"]) or 0 == len(line["CHR"]) or 0 == len(line["MAPINFO"]):
+        if (
+            len(line["Name"]) == 0
+            or len(line["CHR"]) == 0
+            or len(line["MAPINFO"]) == 0
+        ):
             continue
 
         if line_counter % 500 == 0:
             sys.stdout.write("INSERT IGNORE INTO genomic_cpg_annotation (cpg_name, address_id_a, probe_seq_a, address_id_b, probe_seq_b, design_type, color_channel, genome_build, probe_snp_10, gene_name, gene_acc_num, gene_group, island_loc, island_relation, fantom_promoter_loc, dmr, enhancer, hmm_island_loc, reg_feature_loc, reg_feature_group, dhs, platform_id, Chromosome, Strand, EndLoc, Size, StartLoc) VALUES\n")
 
         cpg_name            = to_mysql_string(line["Name"])
-        address_id_a        = line["AddressA_ID"] if 0 < len(line["AddressA_ID"]) else 'null'
+        address_id_a = line["AddressA_ID"] if len(line["AddressA_ID"]) > 0 else 'null'
         probe_seq_a         = to_mysql_string(line["AlleleA_ProbeSeq"])
-        address_id_b        = line["AddressB_ID"] if 0 < len(line["AddressB_ID"]) else 'null'
+        address_id_b = line["AddressB_ID"] if len(line["AddressB_ID"]) > 0 else 'null'
         probe_seq_b         = to_mysql_string(line["AlleleA_ProbeSeq"])
         design_type         = to_mysql_string(line["Infinium_Design_Type"])
         color_channel       = to_mysql_string(line["Color_Channel"])
@@ -60,17 +64,17 @@ with open(annotation_file, 'r') as f:
         island_relation     = to_mysql_string(line["Relation_to_UCSC_CpG_Island"])
         fantom_promoter_loc = to_mysql_string(line["Phantom"])
         dmr                 = to_mysql_string(line["DMR"])
-        enhancer            = line["Enhancer"] if 0 < len(line["Enhancer"]) else 'null'
+        enhancer = line["Enhancer"] if len(line["Enhancer"]) > 0 else 'null'
         hmm_island_loc      = to_mysql_string(line["HMM_Island"])
         reg_feature_loc     = to_mysql_string(line["Regulatory_Feature_Name"])
         reg_feature_group   = to_mysql_string(line["Regulatory_Feature_Group"])
-        dhs                 = line["DHS"] if 0 < len(line["DHS"]) else 'null'
+        dhs = line["DHS"] if len(line["DHS"]) > 0 else 'null'
         chromosome          = to_mysql_string("chr" + line["CHR"])
         strand              = to_mysql_string(line["Strand"])
         endloc              = str(int(line["MAPINFO"]) + 1)
         size                = '1'
         startloc            = line["MAPINFO"]
-        
+
         sys.stdout.write("(" + ','.join([cpg_name, address_id_a, probe_seq_a, address_id_b, probe_seq_b, design_type, color_channel, genome_build, probe_snp_10, gene_name, gene_acc_num, gene_group, island_loc, island_relation, fantom_promoter_loc, dmr, enhancer, hmm_island_loc, reg_feature_loc, reg_feature_group, dhs, '@platform_id', chromosome, strand, endloc, size, startloc]) + ")")
 
         line_counter += 1
